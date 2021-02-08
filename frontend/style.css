@@ -1,0 +1,9 @@
+.label-button {
+    border-radius: 3px;
+    background: aliceblue;
+    color: black;
+    font-weight: 600;
+    padding: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
