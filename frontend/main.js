@@ -24,16 +24,39 @@ async function next() {
 function setJob(job, view) {
     document.body.innerText = '';
     
+    view.header = document.createElement('div');
+    view.header.classList.add('header');
+
     view.title = document.createElement('div');
     view.title.classList.add('title');
     view.title.innerText = "sisyphe: " + job.title;
-    document.body.appendChild(view.title);
+    view.header.appendChild(view.title);
     
     view.progress = document.createElement('div');
     view.progress.classList.add('progress');
     view.progress.innerText = '0%';
-    document.body.appendChild(view.progress);
+    view.header.appendChild(view.progress);
+    document.body.appendChild(view.header);
     
+    
+    view.actions = document.createElement('div');
+    view.actions.classList.add('actions');
+    document.body.appendChild(view.actions);
+
+    for (const action of ['save', 'undo']) {
+        const button = document.createElement('button');
+        button.classList.add('action-button');
+        button.innerText = action;
+        button.onclick = async ()=>{
+            const res = await fetch(`/${action}`);
+            const obj = await res.json();
+            if (obj.id)
+                setExample(obj, view);
+            else console.log(obj)
+        }
+        view.actions.appendChild(button);
+    }
+
     view.content = document.createElement('div');
     view.content.classList.add('content');
     document.body.appendChild(view.content);
@@ -49,7 +72,7 @@ function setJob(job, view) {
               method: "POST", 
               body: JSON.stringify({id: job.id, label: cat.label})
             }).then(res => {
-              console.log("Request complete! response:", res);
+              if (res.ok) next();
             });
         }
         view.buttons.appendChild(button);
@@ -60,7 +83,7 @@ function setJob(job, view) {
 function setExample(example, view) {
     job.id = example.id;
     view.progress.innerText = example.progress;
-    view.content.innerHTML = example.content;
+    view.content.innerHTML = example.example;
 }
 
 function undo() {

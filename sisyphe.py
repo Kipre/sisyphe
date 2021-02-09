@@ -24,30 +24,47 @@ class Sisyphe:
             self.df['label'] = np.nan
         self.todo = set(self.df[self.df['label'].isna()].index)
         self.precedent = None
+        self.done = -1
 
     def update(self, id, label):
-        self.df[id]['label'] = label;
-        self.df.to_csv(filename)
+        try:
+            self.df.loc[id, 'label'] = label
+            return True
+        except KeyError:
+            return False
+
+
+    def save(self):
+        self.df.to_csv(self.filename)
+    
+    def undo(self):
+        self.id = self.precedent
+        return self.element()
+        
     
     def element(self):
-        if self.precedent:
-            return {'id': self.precedent,
-                    'example': self.render(self.df.loc[self.precedent]),
+        if self.id:
+            return {'id': self.id,
+                    'example': self.render(self.df.loc[self.id]),
                     'progress': self.progress()}
         else:
             raise ValueError('no element available')
 
     def progress(self):
-        return 1 - len(self.todo) - len(self.df.index)
+        return f"{round((1 - (len(self.todo) / len(self.df.index)))*100)}%,  done: {self.done}";
 
     def next(self):
-        self.precedent = self.todo.pop()
+        self.precedent = self.id
+        self.id = self.todo.pop()
+        self.done += 1
+        if self.done % 10 == 0:
+            self.save()
         return self.element()
         
     
     def description(self):
         return {'title': self.filename,
-                'categories': [{'name': cat[0], 'label': cat[1]} for cat in self.categories]}
+                'categories': [{'name': cat, 'label': cat} for cat in self.categories]}
 
 def create_handler(sisyphe):
     
@@ -64,11 +81,41 @@ def create_handler(sisyphe):
                 self.return_object(sisyphe.description())
             elif self.path == '/next':
                 self.return_object(sisyphe.next())
+            elif self.path == '/save':
+                sisyphe.save()
+                self.return_object({'saved': True})
+            elif self.path == '/undo':
+                self.return_object(sisyphe.undo())
             else:
                 print("path not registered", self.path)
     
         def do_POST(self):
-            print(self.path, dir(self));
+            if self.path == '/label':
+                obj = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+                success = sisyphe.update(obj['id'], obj['label'])
+                if success:
+                    self.success()
+                else:
+                    self.fail('update operation failed')
+            else:
+                raise ValueError('unknown path {self.path}')
+                
+        
+        def success(self):
+            self.send_response_only(HTTPStatus.OK)
+            self.send_header("Content-type", 'text/plain')
+            self.send_header("Content-Length", '6')
+            self.end_headers()
+            self.wfile.write(b'thanks')
+        
+        
+        def fail(self, message):
+            message = message.encode('utf8')
+            self.send_response_only(HTTPStatus.NOT_ACCEPTABLE)
+            self.send_header("Content-type", 'text/plain')
+            self.send_header("Content-Length", len(message))
+            self.end_headers()
+            self.wfile.write(message)
         
         def return_file(self, file):
             f = open(file, 'rb')

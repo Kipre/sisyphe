@@ -47,8 +47,8 @@ categories = ["Art & Design",
 def render(row):
     html = f"<h3>{row['title']}</h3>"
     html += f"<p>{row['description']}</p>"
-    html += f"<p>{os.linesep.join(row['recent_posts'])}</p>"
+    html += f"<p>{row['recent_posts']}</p>"
     return html
 
-labeller = sisyphe.Sisyphe('C:/Users/kipr/Downloads/example.csv', [(a, i) for i, a in enumerate(categories)], render)
+labeller = sisyphe.Sisyphe('C:/Users/kipr/Downloads/example.csv', categories, render)
 sisyphe.run(labeller)
