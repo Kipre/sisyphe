@@ -1,5 +1,4 @@
 import sisyphe
-import os
 
 categories = ["Art & Design",
   "Bets & Gambling",
@@ -42,7 +41,8 @@ categories = ["Art & Design",
   "Technology & Internet",
   "Travel & Tourism",
   "Video Games",
-  "Other"]
+  "Other",
+  "Not Eng-Rus"]
   
 def render(row):
     html = f"<h3>{row['title']}</h3>"
