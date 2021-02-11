@@ -1,48 +1,19 @@
 import sisyphe
+import pandas as pd
 
-categories = ["Art & Design",
-  "Bets & Gambling",
-  "Books",
-  "Business & Entrepreneurship",
-  "Cars & Other Vehicles",
-  "Celebrities & Lifestyle",
-  "Cryptocurrencies",
-  "Culture & Events",
-  "Curious Facts",
-  "Directories of Channels & Bots",
-  "Economy & Finance",
-  "Education",
-  "Erotic Content",
-  "Fashion & Beauty",
-  "Fitness",
-  "Food & Cooking",
-  "Foreign Language Learning",
-  "Health & Medicine",
-  "History",
-  "Hobbies & Activities",
-  "Home & Architecture",
-  "Humor & Memes",
-  "Investments",
-  "Job Listings",
-  "Kids & Parenting",
-  "Marketing & PR",
-  "Motivation & Self-development",
-  "Movies",
-  "Music",
-  "Offers & Promotions",
-  "Pets",
-  "Politics & Incidents",
-  "Psychology & Relationships",
-  "Real Estate",
-  "Recreation & Entertainment",
-  "Religion & Spirituality",
-  "Science",
-  "Sports",
-  "Technology & Internet",
-  "Travel & Tourism",
-  "Video Games",
-  "Other",
-  "Not Eng-Rus"]
+categories = ["Art & Design", "Bets & Gambling", "Books",
+  "Business & Entrepreneurship", "Cars & Other Vehicles",
+  "Celebrities & Lifestyle", "Cryptocurrencies", "Culture & Events",
+  "Curious Facts", "Directories of Channels & Bots", "Economy & Finance",
+  "Education", "Erotic Content", "Fashion & Beauty", "Fitness",
+  "Food & Cooking", "Foreign Language Learning", "Health & Medicine",
+  "History", "Hobbies & Activities", "Home & Architecture",
+  "Humor & Memes", "Investments", "Job Listings", "Kids & Parenting",
+  "Marketing & PR", "Motivation & Self-development", "Movies",
+  "Music", "Offers & Promotions", "Pets", "Politics & Incidents",
+  "Psychology & Relationships", "Real Estate", "Recreation & Entertainment",
+  "Religion & Spirituality", "Science", "Sports" "Technology & Internet",
+  "Travel & Tourism", "Video Games", "Other", "Not Eng-Rus"]
   
 def render(row):
     html = f"<h3>{row['title']}</h3>"
@@ -50,5 +21,7 @@ def render(row):
     html += f"<p>{row['recent_posts']}</p>"
     return html
 
-labeller = sisyphe.Sisyphe('C:/Users/kipr/Downloads/example.csv', categories, render)
+
+
+labeller = sisyphe.Sisyphe('C:/Users/kipr/Downloads/example.csv', categories, render, multilabel=True)
 sisyphe.run(labeller)

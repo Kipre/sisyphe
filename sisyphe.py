@@ -4,67 +4,58 @@ from http import HTTPStatus
 import os
 import mimetypes
 import json
-import pandas as pd
-import numpy as np
 
 PORT = 8003
 
 class Sisyphe:
+    """Labelizer logic
     
-    def __init__(self, 
-                 filename, 
+    param: features (dict) a mapping of ids to features
+    
+    """
+    
+    def __init__(self,
+                 features,
                  categories,
-                 render):
-        self.filename = filename
+                 save_callback=lambda x: x,
+                 render_callback=lambda x: x,
+                 multilabel=False,
+                 model=None):
+        self.model = model
+        self.multilabel = multilabel
         self.categories = categories
-        self.render = render
-        self.id = -1
-        self.df = pd.read_csv(filename, index_col=0)
-        if 'label' not in self.df.columns:
-            self.df['label'] = np.nan
-        self.todo = set(self.df[self.df['label'].isna()].index)
-        self.precedent = None
-        self.done = -1
+        self.save_callback = save_callback
+        
+        self.features = features
+        self.labels = {}
+        self.todo = set(features)
 
-    def update(self, id, label):
-        try:
-            self.df.loc[id, 'label'] = label
-            return True
-        except KeyError:
-            return False
-
+    def update(self, identificator, label):
+        self.labels[identificator] = label
+        self.todo.discard(identificator)
+        if self.model:
+            self.model.update(self.features[identificator], label)
 
     def save(self):
-        self.df.to_csv(self.filename)
+        self.save_callback(self.labels)
     
-    def undo(self):
-        self.id = self.precedent
-        return self.element()
-        
-    
-    def element(self):
-        if self.id:
-            return {'id': self.id,
-                    'example': self.render(self.df.loc[self.id]),
-                    'progress': self.progress()}
-        else:
-            raise ValueError('no element available')
+    def get(self, identificator=None):
+        if identificator == None:
+            identificator = next(iter(self.todo))
+        result = {'id': identificator,
+                  'example': self.render_callback(self.features[identificator]),
+                  'progress': self.progress()}
+        if self.model:
+            result['probabilities'] = self.model.predict(self.features[identificator])
+        return result
 
     def progress(self):
-        return f"{round((1 - (len(self.todo) / len(self.df.index)))*100)}%,  done: {self.done}";
-
-    def next(self):
-        self.precedent = self.id
-        self.id = self.todo.pop()
-        self.done += 1
-        if self.done % 10 == 0:
-            self.save()
-        return self.element()
-        
+        return len(features), len(todo)
     
     def description(self):
-        return {'title': self.filename,
-                'categories': [{'name': cat, 'label': cat} for cat in self.categories]}
+        return {'categories': self.categories,
+                'multilabel': self.multilabel}
+        
 
 def create_handler(sisyphe):
     
@@ -77,26 +68,26 @@ def create_handler(sisyphe):
                 self.return_file('frontend/style.css')
             elif self.path == '/main.js':
                 self.return_file('frontend/main.js')
-            elif self.path == '/job':
-                self.return_object(sisyphe.description())
-            elif self.path == '/next':
-                self.return_object(sisyphe.next())
             elif self.path == '/save':
                 sisyphe.save()
                 self.return_object({'saved': True})
-            elif self.path == '/undo':
-                self.return_object(sisyphe.undo())
+            elif self.path == '/job':
+                self.return_object(sisyphe.description())
+            elif '/example' in self.path:
+                head, tail = os.path.split(self.path)
+                if tail == 'example':
+                    self.return_object(sisyphe.get())
+                else:
+                    example = sisyphe.get(int(tail))
+                    self.return_object(example)
             else:
                 print("path not registered", self.path)
     
         def do_POST(self):
             if self.path == '/label':
                 obj = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
-                success = sisyphe.update(obj['id'], obj['label'])
-                if success:
-                    self.success()
-                else:
-                    self.fail('update operation failed')
+                sisyphe.update(obj['id'], obj['label'])
+                self.success()
             else:
                 raise ValueError('unknown path {self.path}')
                 
@@ -135,6 +126,13 @@ def create_handler(sisyphe):
             self.send_header("Content-Length", str(len(obj_str)))
             self.end_headers()
             self.wfile.write(obj_str)
+
+        def return_error(self, message):
+            self.send_response(HTTPStatus.NOT_OK)
+            self.send_header("Content-type", 'text/plain')
+            self.send_header("Content-Length", str(len(message)))
+            self.end_headers()
+            self.wfile.write(message)
             
     return SisypheRequestHandler
 
