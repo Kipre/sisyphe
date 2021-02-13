@@ -4,37 +4,86 @@ from http import HTTPStatus
 import os
 import mimetypes
 import json
+import csv
 
 PORT = 8003
 
 class Sisyphe:
-    """Labelizer logic
-    
-    param: features (dict) a mapping of ids to features
-    
+    """Sisyphe: contains the data labelling logic.
+
+    This class has a few methods that enable the request handler to interact
+    with the data.
     """
     
     def __init__(self,
                  features,
                  categories,
+                 logfile,
                  save_callback=lambda x: x,
                  render_callback=lambda x: x,
+                 resume=True,
                  multilabel=False,
-                 model=None):
+                 model=None,
+                 sep='\t',
+                 label_sep='|'):
+        """The Sisyphe constructor.
+
+        Args:
+            features (dict): A dictionnary that maps ids to example objects.
+            categories (:obj:`list` of :obj:`str`): A list of all possible 
+                categories as strings.
+            logfile (str): File where the labels will be logged, line by line and
+                a tab separates the id and the label string.
+            save_callback (function): A callback that takes the label dictionnary
+                as a parameter and saves it in a user-defined way.
+            render_callback (function): A callback that takes the example object
+                and returns an html string that will be displayed in the UI.
+            resume (bool): Remove the ids that are present in the `logfile` to
+                continue the work from where it was stopped.
+            multilabel (bool): Informs whether multiple labels are allowed.
+            model (obj): An online prediction model that has `predict` and
+                `update` methods and understands the example objects and labels.
+            sep (str): A string to separate the id and the label in the log file.
+            label_sep (str): String to separate the labels if `multilabel` is set
+                to `True`.
+
+        """
         self.model = model
         self.multilabel = multilabel
         self.categories = categories
         self.save_callback = save_callback
-        
+        self.render_callback = render_callback
         self.features = features
+        self.logfile = logfile
+        self.sep = sep
+        self.label_sep = label_sep
+        
         self.labels = {}
         self.todo = set(features)
+        
+        key_type = type(next(iter(self.todo)))
+        
+        if resume:
+            with open(logfile, newline='') as csvfile:
+                previous = csv.reader(csvfile, delimiter=sep)
+                for row in previous:
+                    try:
+                        self.todo.discard(key_type(row[0]))
+                    except (TypeError, ValueError, KeyError) as e:
+                        raise ValueError("This exception was " + \
+        "caused by the fact that the index from `logfile` could " + \
+        "not be cast to the type of keys from `features`. Either " + \
+        "pass `resume=False`, check that the identifier types are " + \
+        "consistent or check that there is no header line in the " + \
+        "`logfile`.") from e
 
     def update(self, identificator, label):
         self.labels[identificator] = label
         self.todo.discard(identificator)
         if self.model:
             self.model.update(self.features[identificator], label)
+        with open(self.logfile, 'a') as f:
+            f.write(f"{identificator}{self.sep}{label.replace(os.linesep, '')}" + '\n')
 
     def save(self):
         self.save_callback(self.labels)
@@ -50,11 +99,12 @@ class Sisyphe:
         return result
 
     def progress(self):
-        return len(features), len(todo)
+        return len(self.features), len(self.todo)
     
     def description(self):
         return {'categories': self.categories,
-                'multilabel': self.multilabel}
+                'multilabel': self.multilabel,
+                'labelsep': self.label_sep}
         
 
 def create_handler(sisyphe):
@@ -68,6 +118,8 @@ def create_handler(sisyphe):
                 self.return_file('frontend/style.css')
             elif self.path == '/main.js':
                 self.return_file('frontend/main.js')
+            elif self.path == '/NotoMono-Regular.ttf':
+                self.return_file('frontend/NotoMono-Regular.ttf')
             elif self.path == '/save':
                 sisyphe.save()
                 self.return_object({'saved': True})
@@ -120,7 +172,7 @@ def create_handler(sisyphe):
             f.close()
     
         def return_object(self, obj):
-            obj_str = json.dumps(obj).encode('utf8')
+            obj_str = json.dumps(obj).replace('NaN', 'null').encode('utf8')
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", 'application/json')
             self.send_header("Content-Length", str(len(obj_str)))

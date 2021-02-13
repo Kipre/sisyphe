@@ -1,6 +1,8 @@
 import sisyphe
 import pandas as pd
 
+folder_path = "C:/Users/kipr/Downloads/"
+
 categories = ["Art & Design", "Bets & Gambling", "Books",
   "Business & Entrepreneurship", "Cars & Other Vehicles",
   "Celebrities & Lifestyle", "Cryptocurrencies", "Culture & Events",
@@ -12,7 +14,7 @@ categories = ["Art & Design", "Bets & Gambling", "Books",
   "Marketing & PR", "Motivation & Self-development", "Movies",
   "Music", "Offers & Promotions", "Pets", "Politics & Incidents",
   "Psychology & Relationships", "Real Estate", "Recreation & Entertainment",
-  "Religion & Spirituality", "Science", "Sports" "Technology & Internet",
+  "Religion & Spirituality", "Science", "Sports", "Technology & Internet",
   "Travel & Tourism", "Video Games", "Other", "Not Eng-Rus"]
   
 def render(row):
@@ -21,7 +23,17 @@ def render(row):
     html += f"<p>{row['recent_posts']}</p>"
     return html
 
+data = pd.read_csv(folder_path + 'example.csv', index_col=0)
+
+def save_callback(labels):
+    df = pd.DataFrame.from_dict(labels, orient='index')
+    df.to_csv(folder_path + 'label.csv')
 
 
-labeller = sisyphe.Sisyphe('C:/Users/kipr/Downloads/example.csv', categories, render, multilabel=True)
+labeller = sisyphe.Sisyphe(data.to_dict('index'),
+                           categories,
+                           folder_path + 'log.tsv',
+                           save_callback,
+                           render_callback=render,
+                           multilabel=True)
 sisyphe.run(labeller)

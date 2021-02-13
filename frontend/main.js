@@ -2,7 +2,8 @@
 
 /* configurations */
 const config = {
-    historyLength: 10
+    historyLength: 10,
+    labelsep: ','
 }
 
 const actions = {
@@ -57,6 +58,9 @@ async function get(id) {
 }
 
 function setJob(job) {
+
+    config.labelsep = job.labelsep;
+    
     document.body.innerText = '';
 
     const main = document.createElement('div');
@@ -67,12 +71,12 @@ function setJob(job) {
     const header = document.createElement('div');
     header.classList.add('header');
 
-    const title = document.createElement('div');
+    const title = document.createElement('span');
     title.classList.add('title');
-    title.innerText = "sisyphe: " + job.title;
+    title.innerText = "sisyphe";
     header.appendChild(title);
 
-    view.progress = document.createElement('div');
+    view.progress = document.createElement('span');
     view.progress.classList.add('progress');
     view.progress.innerText = '0%';
 

@@ -1,6 +1,8 @@
-/* html {
-    height: 100%;
-} */
+@font-face {
+    font-family: 'Noto Mono';
+    src: url('NotoMono-Regular.ttf') format('truetype');
+}
+
 html {
     height: 100%;
 }
@@ -11,17 +13,41 @@ body {
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
+    font-family: 'Noto Mono';
+}
+
+button {
+    font-family: 'Noto Mono';
+    font-weight: 600;
+    border: solid 1px #ababab;
+    border-radius: 3px;
+    background: aliceblue;
+    /*     color: black; */
+    padding: 5px;
+    margin: 2px;
 }
 
 .history {
-    padding: 10px;
     overflow-y: auto;
-    max-height 100vh }
-
-.history > div {
-    border: solid 1px;
+    max-height: 88vh;
 }
 
+.history > div {
+    font-size: small;
+    border: solid 2px #fad7ff;
+    border-radius: 10px;
+    background: #fff4fe;
+    padding: 5px;
+}
+
+.actions {
+}
+
+/* .actions > button {
+    display: block;
+    width: 100%;
+    float: left;
+} */
 .toolbar {
     grid-column: 3 / 3;
 }
@@ -31,26 +57,29 @@ body {
     max-height: 100vh;
 }
 
+.main > div {
+    margin: 10px;
+}
+
+.toolbar > div {
+    margin: 10px;
+}
+
 .header {
+    margin: 20px;
 }
 
 .content {
     height: 650px;
     border: solid 1px black;
     border-radius: 5px;
-    overflow-y: auto
+    overflow-y: auto;
+    font-family: 'Noto Mono';
+    background: #f3fff5;
 }
 
 .content > * {
     padding: 10px;
-}
-
-button {
-    border-radius: 3px;
-    background: aliceblue;
-    color: black;
-    padding: 5px;
-    margin: 2px;
 }
 
 button.selected {
@@ -59,13 +88,47 @@ button.selected {
 
 .title {
     font-size: larger;
+    padding-right: 10px;
 }
 
 .label {
     background: #e3ffe2;
     padding: 2px;
-    border: solid 1px;
+    /* border: solid 1px; */
     margin: 2px;
     border-radius: 7px;
     color: black;
+    line-height: 22px
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        background: #1f1f1f;
+        color: #bababa;
+    }
+
+    .content {
+        background: #343434
+    }
+
+    button {
+        background: #505050;
+        border: solid 1px #616161;
+        color: silver;
+        font-weight: 500;
+    }
+
+    button.selected {
+        background: #4e3566
+    }
+
+    .history > div {
+        background: #343434;
+        border: solid 2px #4f4f4f
+    }
+
+    .label {
+        color: #bababa;
+        background: #23571d
+    }
 }
