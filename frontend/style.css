@@ -3,36 +3,53 @@
     src: url('NotoMono-Regular.ttf') format('truetype');
 }
 
-html {
-    height: 100%;
+html, body {
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    max-height: 100%;
-    margin: 0;
+  height: 100vh;
+  width: 100vw;
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
     font-family: 'Noto Mono';
 }
 
+* {
+  box-sizing: border-box;
+}
+
 button {
-    font-family: 'Noto Mono';
     font-weight: 600;
     border: solid 1px #ababab;
     border-radius: 3px;
     background: aliceblue;
-    /*     color: black; */
     padding: 5px;
     margin: 2px;
 }
 
-.history {
-    overflow-y: auto;
-    max-height: 88vh;
+.wrapper {
+    position: relative;
+    height: 100%;
 }
 
-.history > div {
+.scrollable {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+    overflow: auto;
+}
+
+body > div {
+	height: 100%;
+    min-height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+#history > div {
     font-size: small;
     border: solid 2px #fad7ff;
     border-radius: 10px;
@@ -40,14 +57,6 @@ button {
     padding: 5px;
 }
 
-.actions {
-}
-
-/* .actions > button {
-    display: block;
-    width: 100%;
-    float: left;
-} */
 .toolbar {
     grid-column: 3 / 3;
 }
@@ -57,28 +66,20 @@ button {
     max-height: 100vh;
 }
 
-.main > div {
+body > div > div {
     margin: 10px;
 }
 
-.toolbar > div {
-    margin: 10px;
-}
-
-.header {
-    margin: 20px;
-}
-
-.content {
-    height: 650px;
-    border: solid 1px black;
+#content {
+    /* border: solid 1px black; */
     border-radius: 5px;
-    overflow-y: auto;
     font-family: 'Noto Mono';
     background: #f3fff5;
+
+    border: solid 2px #fad7ff;
 }
 
-.content > * {
+#content > * {
     padding: 10px;
 }
 
@@ -94,9 +95,8 @@ button.selected {
 .label {
     background: #e3ffe2;
     padding: 2px;
-    /* border: solid 1px; */
     margin: 2px;
-    border-radius: 7px;
+    border-radius: 5px;
     color: black;
     line-height: 22px
 }
@@ -107,8 +107,9 @@ button.selected {
         color: #bababa;
     }
 
-    .content {
-        background: #343434
+    #content {
+        background: #343434;
+        border: solid 2px #4f4f4f
     }
 
     button {
@@ -122,7 +123,7 @@ button.selected {
         background: #4e3566
     }
 
-    .history > div {
+    #history > div {
         background: #343434;
         border: solid 2px #4f4f4f
     }

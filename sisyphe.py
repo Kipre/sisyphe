@@ -5,6 +5,7 @@ import os
 import mimetypes
 import json
 import csv
+import webbrowser
 
 PORT = 8003
 
@@ -21,7 +22,7 @@ class Sisyphe:
                  logfile,
                  save_callback=lambda x: x,
                  render_callback=lambda x: x,
-                 resume=True,
+                 resume=False,
                  multilabel=False,
                  model=None,
                  sep='\t',
@@ -90,7 +91,10 @@ class Sisyphe:
     
     def get(self, identificator=None):
         if identificator == None:
-            identificator = next(iter(self.todo))
+            if len(self.todo):
+                identificator = next(iter(self.todo))
+            else:
+                return {'progress': 'done'}
         result = {'id': identificator,
                   'example': self.render_callback(self.features[identificator]),
                   'progress': self.progress()}
@@ -112,26 +116,22 @@ def create_handler(sisyphe):
     class SisypheRequestHandler(http.server.BaseHTTPRequestHandler):
     
         def do_GET(self):
-            if self.path == '/':
-                self.return_file('frontend/index.html')
-            elif self.path == '/style.css':
-                self.return_file('frontend/style.css')
-            elif self.path == '/main.js':
-                self.return_file('frontend/main.js')
-            elif self.path == '/NotoMono-Regular.ttf':
-                self.return_file('frontend/NotoMono-Regular.ttf')
-            elif self.path == '/save':
-                sisyphe.save()
-                self.return_object({'saved': True})
-            elif self.path == '/job':
-                self.return_object(sisyphe.description())
-            elif '/example' in self.path:
-                head, tail = os.path.split(self.path)
-                if tail == 'example':
+            head, tail = os.path.split(self.path)
+            if head == '/':
+                if tail == '':
+                    self.return_file('frontend/index.html')
+                elif '.' in tail:
+                    self.return_file('frontend/' + tail)
+                elif tail == 'save':
+                    sisyphe.save()
+                    self.return_object({'saved': True})
+                elif tail == 'job':
+                    self.return_object(sisyphe.description())
+                elif tail == 'example':
                     self.return_object(sisyphe.get())
-                else:
-                    example = sisyphe.get(int(tail))
-                    self.return_object(example)
+            elif head == '/example':
+                example = sisyphe.get(int(tail))
+                self.return_object(example)
             else:
                 print("path not registered", self.path)
     
@@ -190,6 +190,7 @@ def create_handler(sisyphe):
 
 
 def run(sisyphe):
+    webbrowser.open_new_tab(f"http://localhost:{PORT}/")
     with socketserver.TCPServer(("", PORT), create_handler(sisyphe)) as httpd:
         print("serving at port", PORT)
         httpd.serve_forever()

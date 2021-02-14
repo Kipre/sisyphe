@@ -2,8 +2,7 @@
 
 /* configurations */
 const config = {
-    historyLength: 10,
-    labelsep: ','
+    historyLength: 15
 }
 
 const actions = {
@@ -54,13 +53,20 @@ async function get(id) {
     const response = await fetch('example' + (id ? '/' + id.toString() : ''));
     const example = await response.json();
     console.log(example);
+    if (state.example) {
+        historyAdd(state);
+    }
+    state.labels.clear();
+    for (let i = 0; i < view.categories.children.length; i++)
+        view.categories.children[i].classList.remove('selected')
+    
     setExample(example);
 }
 
 function setJob(job) {
 
     config.labelsep = job.labelsep;
-    
+
     document.body.innerText = '';
 
     const main = document.createElement('div');
@@ -92,9 +98,14 @@ function setJob(job) {
     }
     controls.appendChild(button('save', actions.save));
 
+    const contentWrapper = document.createElement('div');
+    contentWrapper.classList.add('wrapper');
     view.content = document.createElement('div');
-    view.content.classList.add('content');
-    main.appendChild(view.content);
+    view.content.id = 'content';
+    view.content.classList.add('scrollable');
+    main.appendChild(contentWrapper);
+
+    contentWrapper.appendChild(view.content);
 
     view.categories = document.createElement('div');
     view.categories.classList.add('categories');
@@ -113,25 +124,30 @@ function setJob(job) {
     }
     main.appendChild(view.categories);
 
+    const historyWrapper = document.createElement('div');
+    historyWrapper.classList.add('wrapper');
     view.history = document.createElement('div');
-    view.history.classList.add('history');
-    toolbar.appendChild(view.history);
+    view.history.id = 'history';
+    view.history.classList.add('scrollable');
+    toolbar.appendChild(historyWrapper);
+    historyWrapper.appendChild(view.history);
 
     document.body.appendChild(main);
     document.body.appendChild(toolbar);
 }
 
 function setExample(example) {
-    if (state.example) {
-        historyAdd(state);
+    if (example.progress == 'done') {
+        for (let i = 0; i < view.categories.children.length; i++)
+            view.categories.children[i].disabled= true;
+        view.content.innerHTML = "<h1>Job is finished, no more examples available.</h1>";
+        actions.save();
+    } else {
+        state.id = example.id;
+        state.example = example.example;
+        view.progress.innerText = example.progress;
+        view.content.innerHTML = example.example;
     }
-    state.labels.clear();
-    for (let i = 0; i < view.categories.children.length; i++)
-        view.categories.children[i].classList.remove('selected')
-    state.id = example.id;
-    state.example = example.example;
-    view.progress.innerText = example.progress;
-    view.content.innerHTML = example.example;
 }
 
 function historyAdd({id, example, labels}) {
